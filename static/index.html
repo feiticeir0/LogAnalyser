@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log File Analyzer</title>
+    <style>
+        :root {
+            --bg-main: linear-gradient(135deg, #114357 0%, #325b4d 55%, #597e52 100%);
+            --text-main: #1d2328;
+            --text-muted: #53606b;
+            --card-bg: #ffffff;
+            --card-soft-bg: #f3f7f8;
+            --accent: #2d7d6f;
+            --accent-2: #326fa8;
+            --danger: #a0222a;
+            --border: #d7dfe3;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+            --code-bg: #edf2f4;
+        }
+
+        body.dark {
+            --bg-main: linear-gradient(135deg, #0e131a 0%, #121d28 45%, #1d2835 100%);
+            --text-main: #e3ebf2;
+            --text-muted: #9aadb9;
+            --card-bg: #17202a;
+            --card-soft-bg: #1f2b37;
+            --accent: #3fa18f;
+            --accent-2: #5a95c9;
+            --danger: #dc5b63;
+            --border: #2f3d4a;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+            --code-bg: #23303d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", "Noto Sans", "Ubuntu", sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            max-width: 980px;
+            width: 100%;
+            padding: 32px;
+            animation: slideIn 0.25s ease-out;
+            border: 1px solid var(--border);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: var(--text-main);
+            margin-bottom: 10px;
+            font-size: 30px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 22px;
+            font-size: 14px;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-bottom: 14px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--accent);
+            border-radius: 10px;
+            padding: 34px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 16px;
+            background: var(--card-soft-bg);
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-2);
+        }
+
+        .upload-area.dragover {
+            transform: scale(1.01);
+            border-color: var(--accent-2);
+        }
+
+        .upload-icon {
+            font-size: 42px;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            color: var(--text-main);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .upload-subtext {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .profile-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 220px;
+        }
+
+        .profile-group label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        select {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #fff;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--card-soft-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .file-info {
+            padding: 12px;
+            background: var(--card-soft-bg);
+            border-left: 4px solid var(--accent);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            color: var(--text-main);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .file-size {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .results {
+            margin-top: 18px;
+            padding: 16px;
+            background: var(--card-soft-bg);
+            border-radius: 10px;
+            display: none;
+            border: 1px solid var(--border);
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .results-title {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .summary-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .patterns-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .patterns-box ul {
+            margin-left: 18px;
+        }
+
+        .patterns-box li {
+            margin: 4px 0;
+        }
+
+        .structured-table-wrapper {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: auto;
+            max-height: 320px;
+            margin-bottom: 14px;
+        }
+
+        table {
+            border-collapse: collapse;
+            min-width: 920px;
+            width: 100%;
+        }
+
+        th, td {
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            vertical-align: top;
+            padding: 10px;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: var(--card-soft-bg);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            cursor: pointer;
+        }
+
+        .sev-critical { color: #be1b25; font-weight: 700; }
+        .sev-high { color: #d96f00; font-weight: 700; }
+        .sev-medium { color: #5f6a72; font-weight: 700; }
+        .sev-low { color: #2f8c63; font-weight: 700; }
+
+        .markdown-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 14px;
+            border-radius: 8px;
+            max-height: 360px;
+            overflow-y: auto;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        .markdown-panel h1,
+        .markdown-panel h2,
+        .markdown-panel h3,
+        .markdown-panel h4 {
+            margin: 10px 0 8px;
+        }
+
+        .markdown-panel ul,
+        .markdown-panel ol {
+            margin: 8px 0 8px 20px;
+        }
+
+        .markdown-panel pre,
+        .markdown-panel code {
+            background: var(--code-bg);
+        }
+
+        .markdown-panel code {
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-family: "DejaVu Sans Mono", "Monaco", monospace;
+            font-size: 12px;
+        }
+
+        .markdown-panel pre {
+            border-radius: 6px;
+            padding: 10px;
+            overflow-x: auto;
+        }
+
+        .error {
+            color: var(--danger);
+            padding: 10px;
+            background: color-mix(in srgb, var(--danger) 12%, transparent);
+            border-left: 4px solid var(--danger);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 760px) {
+            .container {
+                padding: 20px;
+            }
+            .button-group {
+                margin-left: 0;
+                width: 100%;
+            }
+            .button-group button {
+                flex: 1;
+            }
+            .profile-group {
+                width: 100%;
+            }
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                border: none;
+                max-width: 100%;
+                padding: 0;
+            }
+            .top-actions,
+            .upload-area,
+            .row,
+            .file-info,
+            .results-actions,
+            .error {
+                display: none !important;
+            }
+            .results {
+                display: block !important;
+                background: #fff;
+                border: none;
+                padding: 0;
+            }
+            .structured-table-wrapper,
+            .markdown-panel,
+            .summary-box,
+            .patterns-box {
+                border: 1px solid #ccc;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-actions">
+            <button class="btn-secondary" id="themeBtn" type="button">Toggle Theme</button>
+        </div>
+        <h1>LogAnalyser</h1>
+        <p class="subtitle">Upload Linux logs (especially Logwatch), choose an analysis profile, and review prioritized structured findings.</p>
+
+        <div class="error" id="errorMessage"></div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">🗂️</div>
+            <div class="upload-text">Drag and drop your log file here</div>
+            <div class="upload-subtext">or click to browse (supports .log and .txt files)</div>
+            <input type="file" id="fileInput" accept=".log,.txt" />
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+
+        <div class="row">
+            <div class="profile-group">
+                <label for="profileSelect">Analysis Profile</label>
+                <select id="profileSelect">
+                    <option value="general">General</option>
+                    <option value="security">Security</option>
+                    <option value="service_health">Service Health</option>
+                    <option value="compliance">Compliance</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" id="uploadBtn" disabled>Analyze Log File</button>
+                <button class="btn-secondary" id="clearBtn">Clear</button>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="results-title">Analysis Results</div>
+            <div class="results-actions">
+                <button class="btn-secondary" id="saveMdBtn" disabled>Save .md</button>
+                <button class="btn-secondary" id="savePdfBtn" disabled>Export PDF</button>
+            </div>
+            <div class="summary-box" id="summaryBox"></div>
+            <div class="patterns-box" id="patternsBox" style="display:none;">
+                <strong>Repeated / Suspicious Patterns</strong>
+                <ul id="patternsList"></ul>
+            </div>
+            <div class="structured-table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-sort-key="severity">Severity</th>
+                            <th data-sort-key="service">Service</th>
+                            <th data-sort-key="category">Category</th>
+                            <th data-sort-key="summary">Summary</th>
+                            <th data-sort-key="confidence">Confidence</th>
+                            <th>Evidence</th>
+                            <th>Actions</th>
+                            <th data-sort-key="sources">Sources</th>
+                        </tr>
+                    </thead>
+                    <tbody id="findingsTableBody"></tbody>
+                </table>
+            </div>
+            <div class="markdown-panel" id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const profileSelect = document.getElementById('profileSelect');
+        const results = document.getElementById('results');
+        const resultsContent = document.getElementById('resultsContent');
+        const errorMessage = document.getElementById('errorMessage');
+        const saveMdBtn = document.getElementById('saveMdBtn');
+        const savePdfBtn = document.getElementById('savePdfBtn');
+        const summaryBox = document.getElementById('summaryBox');
+        const patternsBox = document.getElementById('patternsBox');
+        const patternsList = document.getElementById('patternsList');
+        const findingsTableBody = document.getElementById('findingsTableBody');
+        const themeBtn = document.getElementById('themeBtn');
+
+        let selectedFile = null;
+        let latestAnalysisMarkdown = '';
+        let latestAnalysisHtml = '';
+        let latestStructured = null;
+        let tableSortState = { key: 'severity', direction: 'asc' };
+
+        const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.add('dark');
+        }
+
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        document.querySelectorAll('th[data-sort-key]').forEach((header) => {
+            header.addEventListener('click', () => {
+                const key = header.getAttribute('data-sort-key');
+                if (tableSortState.key === key) {
+                    tableSortState.direction = tableSortState.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    tableSortState.key = key;
+                    tableSortState.direction = 'asc';
+                }
+                if (latestStructured && latestStructured.findings) {
+                    renderFindingsTable([...latestStructured.findings]);
+                }
+            });
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            fileName.textContent = `📄 ${file.name}`;
+            fileSize.textContent = `Size: ${formatFileSize(file.size)}`;
+            fileInfo.classList.add('show');
+            uploadBtn.disabled = false;
+            errorMessage.classList.remove('show');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function buildBaseFilename() {
+            const source = selectedFile && selectedFile.name ? selectedFile.name : 'log-analysis';
+            return source.replace(/\.[^.]+$/, '');
+        }
+
+        function downloadFile(filename, content, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = filename;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderInlineMarkdown(text) {
+            const escaped = escapeHtml(text);
+            return escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
+        }
+
+        function renderMarkdown(md) {
+            const lines = String(md || '').replace(/\r\n/g, '\n').split('\n');
+            const html = [];
+            let inUl = false;
+            let inOl = false;
+            let inCode = false;
+
+            const closeLists = () => {
+                if (inUl) {
+                    html.push('</ul>');
+                    inUl = false;
+                }
+                if (inOl) {
+                    html.push('</ol>');
+                    inOl = false;
+                }
+            };
+
+            for (const line of lines) {
+                if (line.startsWith('```')) {
+                    closeLists();
+                    if (!inCode) {
+                        inCode = true;
+                        html.push('<pre><code>');
+                    } else {
+                        inCode = false;
+                        html.push('</code></pre>');
+                    }
+                    continue;
+                }
+
+                if (inCode) {
+                    html.push(escapeHtml(line) + '\n');
+                    continue;
+                }
+
+                if (!line.trim()) {
+                    closeLists();
+                    continue;
+                }
+
+                const heading = line.match(/^(#{1,4})\s+(.*)$/);
+                if (heading) {
+                    closeLists();
+                    const level = heading[1].length;
+                    html.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+                    continue;
+                }
+
+                const ulMatch = line.match(/^\s*-\s+(.*)$/);
+                if (ulMatch) {
+                    if (inOl) {
+                        html.push('</ol>');
+                        inOl = false;
+                    }
+                    if (!inUl) {
+                        html.push('<ul>');
+                        inUl = true;
+                    }
+                    html.push(`<li>${renderInlineMarkdown(ulMatch[1])}</li>`);
+                    continue;
+                }
+
+                const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+                if (olMatch) {
+                    if (inUl) {
+                        html.push('</ul>');
+                        inUl = false;
+                    }
+                    if (!inOl) {
+                        html.push('<ol>');
+                        inOl = true;
+                    }
+                    html.push(`<li>${renderInlineMarkdown(olMatch[1])}</li>`);
+                    continue;
+                }
+
+                closeLists();
+                html.push(`<p>${renderInlineMarkdown(line)}</p>`);
+            }
+
+            closeLists();
+            if (inCode) {
+                html.push('</code></pre>');
+            }
+            return html.join('');
+        }
+
+        function severityClass(severity) {
+            const value = String(severity || 'medium').toLowerCase();
+            return `sev-${value}`;
+        }
+
+        function sortFindings(findings) {
+            const { key, direction } = tableSortState;
+            const factor = direction === 'asc' ? 1 : -1;
+            return findings.sort((a, b) => {
+                let left = a[key];
+                let right = b[key];
+
+                if (key === 'severity') {
+                    left = severityOrder[String(left || 'medium').toLowerCase()] ?? 2;
+                    right = severityOrder[String(right || 'medium').toLowerCase()] ?? 2;
+                } else if (key === 'confidence') {
+                    left = Number(left || 0);
+                    right = Number(right || 0);
+                } else if (key === 'sources') {
+                    left = (a.sources || []).join(',');
+                    right = (b.sources || []).join(',');
+                } else {
+                    left = String(left || '').toLowerCase();
+                    right = String(right || '').toLowerCase();
+                }
+
+                if (left < right) return -1 * factor;
+                if (left > right) return 1 * factor;
+                return 0;
+            });
+        }
+
+        function renderFindingsTable(findings) {
+            const sorted = sortFindings(findings);
+            findingsTableBody.innerHTML = '';
+
+            if (!sorted.length) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="8">No significant findings detected.</td>';
+                findingsTableBody.appendChild(row);
+                return;
+            }
+
+            sorted.forEach((finding) => {
+                const evidence = (finding.evidence || []).slice(0, 3).map((line) => `<li>${escapeHtml(line)}</li>`).join('');
+                const actions = (finding.recommended_actions || []).slice(0, 3).map((line) => `<li>${escapeHtml(line)}</li>`).join('');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="${severityClass(finding.severity)}">${escapeHtml(finding.severity || 'medium').toUpperCase()}</td>
+                    <td>${escapeHtml(finding.service || 'unknown')}</td>
+                    <td>${escapeHtml(finding.category || 'other')}</td>
+                    <td>${escapeHtml(finding.summary || '')}</td>
+                    <td>${Number(finding.confidence || 0).toFixed(2)}</td>
+                    <td><ul>${evidence || '<li>n/a</li>'}</ul></td>
+                    <td><ul>${actions || '<li>n/a</li>'}</ul></td>
+                    <td>${escapeHtml((finding.sources || []).join(', ') || 'n/a')}</td>
+                `;
+                findingsTableBody.appendChild(row);
+            });
+        }
+
+        function renderStructured(structured) {
+            latestStructured = structured;
+            summaryBox.innerHTML = `
+                <strong>Overall Summary</strong><br>
+                ${escapeHtml(structured.overall_summary || 'No summary returned.')}<br>
+                <small>Chunks analyzed: ${Number(structured.chunk_count || 0)}</small>
+            `;
+
+            const patterns = Array.isArray(structured.global_patterns) ? structured.global_patterns : [];
+            patternsList.innerHTML = '';
+            if (patterns.length) {
+                patterns.forEach((pattern) => {
+                    const item = document.createElement('li');
+                    item.textContent = pattern;
+                    patternsList.appendChild(item);
+                });
+                patternsBox.style.display = 'block';
+            } else {
+                patternsBox.style.display = 'none';
+            }
+
+            renderFindingsTable(Array.isArray(structured.findings) ? [...structured.findings] : []);
+        }
+
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
+            results.classList.remove('show');
+            errorMessage.classList.remove('show');
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('profile', profileSelect.value);
+
+            try {
+                const response = await fetch('/analyse', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'An error occurred');
+                }
+
+                latestAnalysisMarkdown = typeof data.analysis === 'string'
+                    ? data.analysis
+                    : JSON.stringify(data.analysis, null, 2);
+                latestAnalysisHtml = renderMarkdown(latestAnalysisMarkdown);
+                resultsContent.innerHTML = latestAnalysisHtml;
+                renderStructured(data.structured || {});
+
+                saveMdBtn.disabled = false;
+                savePdfBtn.disabled = false;
+                results.classList.add('show');
+            } catch (error) {
+                errorMessage.textContent = `❌ ${error.message}`;
+                errorMessage.classList.add('show');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = 'Analyze Log File';
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            results.classList.remove('show');
+            errorMessage.classList.remove('show');
+            latestAnalysisMarkdown = '';
+            latestAnalysisHtml = '';
+            latestStructured = null;
+            findingsTableBody.innerHTML = '';
+            patternsList.innerHTML = '';
+            saveMdBtn.disabled = true;
+            savePdfBtn.disabled = true;
+            uploadBtn.disabled = true;
+        });
+
+        saveMdBtn.addEventListener('click', () => {
+            if (!latestAnalysisMarkdown) return;
+            const filename = `${buildBaseFilename()}-analysis.md`;
+            downloadFile(filename, latestAnalysisMarkdown, 'text/markdown;charset=utf-8');
+        });
+
+        savePdfBtn.addEventListener('click', () => {
+            if (!latestAnalysisMarkdown) return;
+
+            const printableHtml = latestAnalysisHtml
+                || `<pre>${escapeHtml(latestAnalysisMarkdown)}</pre>`;
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) return;
+
+            const summaryHtml = summaryBox.innerHTML;
+            const patternsHtml = patternsBox.style.display === 'none' ? '' : patternsBox.innerHTML;
+            const tableHtml = document.querySelector('.structured-table-wrapper').innerHTML;
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Log Analysis Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 24px; color: #222; line-height: 1.5; }
+                        h1 { margin-bottom: 10px; }
+                        h2, h3 { margin: 14px 0 8px; }
+                        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; font-size: 12px; }
+                        th { background: #f3f3f3; }
+                        ul { margin: 6px 0 6px 18px; }
+                        code, pre { background: #f3f3f3; }
+                        code { padding: 2px 4px; border-radius: 4px; }
+                        pre { padding: 10px; border-radius: 6px; }
+                        .panel { border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Log Analysis Report</h1>
+                    <div class="panel">${summaryHtml}</div>
+                    ${patternsHtml ? `<div class="panel">${patternsHtml}</div>` : ''}
+                    <h2>Structured Findings</h2>
+                    ${tableHtml}
+                    <h2>Narrative Report</h2>
+                    <div class="panel">${printableHtml}</div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        });
+    </script>
+</body>
+</html>
