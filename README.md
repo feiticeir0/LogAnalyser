@@ -23,6 +23,7 @@ It is designed for local/private usage: logs stay on your machine.
 2. Choose a profile to analyse. 
 
 ![Log Analyser profiles](/assets/loganalyser3.png "Log Analyser profiles")
+
 2. The backend detects Logwatch section boundaries (`--- ... Begin ---`) and builds event-aware chunks.
 
 3. Each chunk is analyzed by an Ollama model through `langchain-ollama` and converted to structured JSON findings.
@@ -35,9 +36,7 @@ It is designed for local/private usage: logs stay on your machine.
     - `.md` (editable, versionable)
     - PDF (formatted print/export from browser)
 
-
 ![Log Analyser profiles](/assets/loganalyser4.png "Log Analyser profiles")
-
 
 ## Tech Stack
 
