@@ -1,6 +1,7 @@
 # LogAnalyser
-
 Small local web app to analyze Linux **Logwatch** reports with an Ollama-hosted LLM.
+
+![Log Analyser Main](/assets/loganalyser1.png "Log Analyser main")
 
 ## Purpose
 
@@ -15,17 +16,28 @@ This project helps you understand Logwatch output faster by turning long service
 It is designed for local/private usage: logs stay on your machine.
 
 ## How It Works
+![Log Analyser log file updated](/assets/loganalyser2.png "Log Analyser log file updated")
 
 1. Upload a `.log` or `.txt` file in the web UI.
+
+2. Choose a profile to analyse. 
+
+![Log Analyser profiles](/assets/loganalyser3.png "Log Analyser profiles")
 2. The backend detects Logwatch section boundaries (`--- ... Begin ---`) and builds event-aware chunks.
+
 3. Each chunk is analyzed by an Ollama model through `langchain-ollama` and converted to structured JSON findings.
+
 4. A second-pass reducer deduplicates and prioritizes findings across all chunks.
 5. Results are shown as:
-- a structured sortable table (severity, service, confidence, evidence, actions, sources)
-- a narrative Markdown report
+    - a structured sortable table (severity, service, confidence, evidence, actions, sources)
+    - a narrative Markdown report
 6. You can export results as:
-- `.md` (editable, versionable)
-- PDF (formatted print/export from browser)
+    - `.md` (editable, versionable)
+    - PDF (formatted print/export from browser)
+
+
+![Log Analyser profiles](/assets/loganalyser4.png "Log Analyser profiles")
+
 
 ## Tech Stack
 
@@ -59,6 +71,11 @@ pip install fastapi uvicorn python-multipart langchain-ollama langchain-text-spl
 
 3. Install Ollama (Linux):
 
+We have several options to install Ollama:
+- Using a script
+- Using docker
+    - docker with CUDA support (highly recommended)
+
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ```
@@ -75,10 +92,24 @@ Start Ollama:
 ollama serve
 ```
 
+Or run [Ollama with Docker](https://hub.docker.com/r/ollama/ollama) (example with CUDA support):
+
+**note**: You need to have *nvidia-container-toolkit* installed
+
+```bash
+docker run -d --gpus=all --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
+```
+
 In another terminal, pull a model:
 
 ```bash
 ollama pull mistral
+```
+
+If using Docker, pull the model inside the container:
+
+```bash
+docker exec -it ollama ollama pull mistral
 ```
 
 The code currently defaults to:
