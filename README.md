@@ -3,7 +3,7 @@ Small local web app to analyze Linux **Logwatch** reports with an Ollama-hosted 
 
 ![Log Analyser Main](/assets/loganalyser1.png "Log Analyser main")
 
-## Purpose
+## 🏆 Purpose
 
 This project helps you understand Logwatch output faster by turning long service sections into:
 
@@ -15,7 +15,7 @@ This project helps you understand Logwatch output faster by turning long service
 
 It is designed for local/private usage: logs stay on your machine.
 
-## How It Works
+## 🔩 How It Works
 ![Log Analyser log file updated](/assets/loganalyser2.png "Log Analyser log file updated")
 
 1. Upload a `.log` or `.txt` file in the web UI.
@@ -38,14 +38,14 @@ It is designed for local/private usage: logs stay on your machine.
 
 ![Log Analyser profiles](/assets/loganalyser4.png "Log Analyser profiles")
 
-## Tech Stack
+## 💻 Tech Stack
 
 - FastAPI
 - LangChain (`langchain-ollama`, `langchain-text-splitters`)
 - Ollama (local model serving)
 - Simple HTML/CSS/JS frontend (offline-safe built-in Markdown renderer)
 
-## Project Structure
+## 📂 Project Structure
 
 - `app.py`: FastAPI app and `/analyse` endpoint with profile support
 - `operations.py`: Logwatch-aware chunking, first-pass chunk analysis, and second-pass reducer
@@ -53,13 +53,13 @@ It is designed for local/private usage: logs stay on your machine.
 - `prompt.py`: profile-specific prompts + reducer prompt
 - `static/index.html`: frontend UI with structured table, sorting, dark mode, print styles, and export actions
 
-## Requirements
+## 🔨 Requirements
 
 - Python 3.11+ (project currently runs in a local venv)
 - Ollama installed and running
 - At least one local model pulled in Ollama
 
-## Install
+## 🔧 Install
 
 1. Create and activate a virtual environment (if needed).
 2. Install Python dependencies:
@@ -83,7 +83,7 @@ Official docs:
 - Linux install: https://docs.ollama.com/linux
 - Quickstart: https://docs.ollama.com/quickstart
 
-## Ollama Setup
+## 🎡 Ollama Setup
 
 Start Ollama:
 
@@ -119,7 +119,7 @@ model="mistral:7b-instruct-v0.3-q8_0"
 
 If that exact tag is not available locally, update `models.py` to a tag you have (for example `mistral:latest`).
 
-## Model Recommendations (Logwatch Analysis)
+## 📈 Model Recommendations (Logwatch Analysis)
 
 There is no single best model for every machine. Use this practical tiering:
 
@@ -144,7 +144,7 @@ Notes:
 - For this app, non-coding general instruction models are usually better than coder-focused models.
 - Keep temperature low (current config uses `0.15`) for stable, repeatable findings.
 
-## Run the App
+## 🚀 Run the App
 
 ```bash
 uvicorn app:app --reload
@@ -154,7 +154,7 @@ Open:
 
 `http://127.0.0.1:8000`
 
-## Analysis Profiles
+## 🚧 Analysis Profiles
 
 You can choose one of the built-in profiles from the UI before running analysis:
 
@@ -165,7 +165,7 @@ You can choose one of the built-in profiles from the UI before running analysis:
 
 Profiles change prompt focus while keeping the same output schema.
 
-## Export Formats: Markdown vs PDF
+## 🚏 Export Formats: Markdown vs PDF
 
 - **Markdown (`.md`)**: best for editing, Git history, and collaboration in tools like VS Code/GitHub.
 - **PDF**: best for fixed formatting and sharing with non-technical stakeholders.
@@ -174,20 +174,20 @@ Recommended workflow:
 1. Save `.md` as your source of truth.
 2. Export PDF when you need a finalized report.
 
-## Tuning Tips
+## 🚤 Tuning Tips
 
 - If analyses feel too brief, increase `num_predict` in `models.py`.
 - If model output drifts or gets creative, keep temperature low (`0.1` to `0.2`).
 - If logs are very large, keep chunking event-aware (already implemented in `operations.py`).
 - If chunk-level findings are repetitive, keep the reducer pass enabled (default behavior).
 
-## License
+## 🗽 License
 
 This project is free software released under the **GNU General Public License v3.0 or later (GPL-3.0-or-later)**.
 
 See `LICENSE` for the full text.
 
-## References
+## 📓 References
 
 - Ollama docs: https://docs.ollama.com/
 - Ollama Linux install: https://docs.ollama.com/linux
